@@ -2,9 +2,9 @@ name: Cargo Lint - Test - Build
 
 on:
   push:
-    branches: [ $default-branch ]
+    branches: [ main ]
   pull_request:
-    branches: [ $default-branch ]
+    branches: [ main ]
 
 env:
   CARGO_TERM_COLOR: always
@@ -25,7 +25,7 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Check code suggestions with cargo clippy
-        run: cargo clippy --Dwarnings
+        run: cargo clippy -- -D warnings
 
   test:
     name: Test
