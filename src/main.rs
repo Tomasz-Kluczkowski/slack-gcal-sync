@@ -1,7 +1,5 @@
-use crate::configuration::configuration_reader::read_json_configuration;
+use configuration::read_json_configuration;
 use serde::{Deserialize, Serialize};
-
-mod configuration;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Person {
