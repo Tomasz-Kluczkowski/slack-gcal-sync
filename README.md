@@ -1,4 +1,5 @@
 # slack-gcal-sync
+![Lint-Test-Build](https://github.com/Tomasz-Kluczkowski/slack-gcal-sync/actions/workflows/ci.yml/badge.svg)
 Synchronise events from Google Calendar to user profile in Slack
 
 This project is my test ground for learning Rust language.
