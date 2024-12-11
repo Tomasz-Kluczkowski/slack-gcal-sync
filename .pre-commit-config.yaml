@@ -1,9 +1,17 @@
 repos:
   - repo: local
     hooks:
-      - id: rustfmt
-        name: rustfmt
+      - id: cargo formatting
+        name: cargo formatting
         description: Check if all files follow the rustfmt style
         entry: cargo fmt --all
+        language: system
+        pass_filenames: false
+  - repo: local
+    hooks:
+      - id: cargo testing
+        name: cargo testing
+        description: Test entire workspace
+        entry: cargo test --workspace
         language: system
         pass_filenames: false
