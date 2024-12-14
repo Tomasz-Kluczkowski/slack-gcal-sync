@@ -1,0 +1,8 @@
+[package]
+name = "gcal_integration"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+configuration = { path = "../configuration"}
+google-calendar3 = "6.0.0"
