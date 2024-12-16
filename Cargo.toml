@@ -7,5 +7,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-serde = {version = "1.0.215", features = ["derive"]}
 configuration = { path = "configuration"}
+gcal_integration = { path = "gcal_integration"}
+tokio = { version = "1.0.0", features = ["rt", "rt-multi-thread", "macros"] }
+clap = { version = "4.5.23", features = ["derive"] }
+google-calendar3 = "6.0.0"
+anyhow = "1.0.94"
