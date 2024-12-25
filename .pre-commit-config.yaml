@@ -9,9 +9,25 @@ repos:
         pass_filenames: false
   - repo: local
     hooks:
+      - id: cargo clippy
+        name: cargo clippy
+        description: Check if all files follow cargo clippy style
+        entry: cargo clippy -- -D warnings
+        language: system
+        pass_filenames: false
+  - repo: local
+    hooks:
       - id: cargo testing
         name: cargo testing
         description: Test entire workspace
         entry: cargo test --workspace
+        language: system
+        pass_filenames: false
+  - repo: local
+    hooks:
+      - id: cargo build
+        name: cargo build
+        description: Build entire workspace
+        entry: cargo build --workspace
         language: system
         pass_filenames: false

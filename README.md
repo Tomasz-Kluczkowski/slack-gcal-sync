@@ -35,3 +35,19 @@ cargo build --workspace
 ```shell
 cargo build --release --workspace
 ```
+
+## Command line interface
+
+- Run `slack-gcal-sync --help` to see command line interface options.
+
+## Application Configuration
+
+The application configuration is read in the following order:
+- if `--application-config-path` cli option is specified, we try to load it from a `json` file at that path.
+  The application configuration must specify all values for application configuration, or it will fail to load.
+- if `--application-config-path` cli option is **not** specified, a default application configuration will be used.
+- any CLI options such as `--calendar-id` override what is specified in the application config file or default application config.
+
+### Application config file
+
+This file holds application configuration in json format. All keys are required for configuration to be valid.

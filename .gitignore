@@ -1,4 +1,5 @@
-/target
+target
 .idea
-.service-account
+.service_account
 .test_data
+.run
