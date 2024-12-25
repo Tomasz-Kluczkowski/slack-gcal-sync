@@ -8,7 +8,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum GoogleCalendarIntegrationError {
-    #[error("Cannot communicate with Google Calendar Calendar API")]
+    #[error("Cannot communicate with Google Calendar API")]
     GoogleCalendarCommunicationError(#[from] GoogleAPIError),
 
     #[error("IO Error occurred")]
@@ -35,7 +35,7 @@ pub async fn get_calendar_hub(
 pub async fn get_calendar_events_for_today(
     hub: CalendarHub<HttpsConnector<HttpConnector>>,
     calendar_id: &str,
-) -> Result<Option<Vec<Event>>, GoogleCalendarIntegrationError> {
+) -> Result<Vec<Event>, GoogleCalendarIntegrationError> {
     let now = Utc::now();
     let start_of_day = Utc
         .with_ymd_and_hms(now.year(), now.month(), now.day(), 0, 0, 0)
@@ -48,5 +48,5 @@ pub async fn get_calendar_events_for_today(
         .time_max(end_of_day)
         .doit()
         .await?;
-    Ok(events.items)
+    Ok(events.items.unwrap_or_else(Vec::new))
 }
