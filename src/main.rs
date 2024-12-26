@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use clap::Parser;
-use configuration::{read_json_configuration, ApplicationCommandLineArguments, ApplicationConfiguration};
+use configuration::{get_application_configuration, read_json_configuration, ApplicationCommandLineArguments};
 use gcal_integration::{get_calendar_events_for_today, get_calendar_hub};
 use google_calendar3::yup_oauth2::ServiceAccountKey;
 use log::info;
@@ -14,12 +14,16 @@ async fn run() -> Result<()> {
             LOGGING_CONFIG_PATH
         )
     })?;
-    let args = ApplicationCommandLineArguments::parse();
 
-    let application_configuration = ApplicationConfiguration {
-        service_account_key_path: args.service_account_key_path,
-        calendar_id: args.calendar_id,
-    };
+    let args = ApplicationCommandLineArguments::parse();
+    let application_config_path = args.application_config_path.clone();
+
+    let application_configuration = get_application_configuration(args).with_context(|| {
+        format!(
+            "Failed to read application config from path: '{}'",
+            application_config_path
+        )
+    })?;
 
     info!("Reading google calendar service account key.");
     let service_account_key =
