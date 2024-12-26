@@ -45,9 +45,17 @@ cargo build --release --workspace
 The application configuration is read in the following order:
 - if `--application-config-path` cli option is specified, we try to load it from a `json` file at that path.
   The application configuration must specify all values for application configuration, or it will fail to load.
-- if `--application-config-path` cli option is **not** specified, a default application configuration will be used.
+- if `--application-config-path` cli option is **not** specified, a default application path will be used: `config/application_config.json`.
+- if there is no application config file (at default or specified path) we will set default app config.
 - any CLI options such as `--calendar-id` override what is specified in the application config file or default application config.
 
 ### Application config file
 
 This file holds application configuration in json format. All keys are required for configuration to be valid.
+
+```json
+{
+  "calendar_id":  "my-calendar@gmail.com",
+  "service_account_key_path": ".service_account/.service_account.json"
+}
+```
