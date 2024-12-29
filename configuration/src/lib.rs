@@ -49,10 +49,15 @@ pub fn get_application_configuration(
 ) -> Result<ApplicationConfiguration, ConfigurationError> {
     let mut app_config: ApplicationConfiguration = if Path::new(args.application_config_path.as_str()).exists() {
         info!(
-            "Loading application configuration from file at path: {}.",
+            "Loading application configuration from file at path: '{}'.",
             args.application_config_path
         );
-        read_json_configuration::<ApplicationConfiguration>(&args.application_config_path)?
+        let app_config = read_json_configuration::<ApplicationConfiguration>(&args.application_config_path)?;
+        info!(
+            "Successfully loaded application configuration from file at path: '{}'.",
+            args.application_config_path
+        );
+        app_config
     } else {
         warn!(
             "No application configuration file found at path: '{}'. Using default settings. \
