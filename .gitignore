@@ -1,5 +1,5 @@
 target
 .idea
-.service_account
+.secrets
 .test_data
 .run
