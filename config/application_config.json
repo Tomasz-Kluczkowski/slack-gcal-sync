@@ -1,4 +1,4 @@
 {
   "calendar_id":  "example@gmail.com",
-  "service_account_key_path": ".service_account/.service_account.json"
+  "service_account_key_path": ".secrets/.service_account.json"
 }

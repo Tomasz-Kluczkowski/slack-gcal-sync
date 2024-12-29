@@ -56,6 +56,6 @@ This file holds application configuration in json format. All keys are required 
 ```json
 {
   "calendar_id":  "my-calendar@gmail.com",
-  "service_account_key_path": ".service_account/.service_account.json"
+  "service_account_key_path": ".secrets/.service_account.json"
 }
 ```

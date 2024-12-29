@@ -6,7 +6,7 @@ use std::fs::File;
 use std::path::Path;
 use thiserror::Error;
 
-const DEFAULT_SERVICE_ACCOUNT_PATH: &str = ".service_account/.service_account.json";
+const DEFAULT_SERVICE_ACCOUNT_PATH: &str = ".secrets/.service_account.json";
 const DEFAULT_APPLICATION_CONFIG_PATH: &str = "config/application_config.json";
 const DEFAULT_CALENDAR_ID: &str = "primary";
 
