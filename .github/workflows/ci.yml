@@ -37,7 +37,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
-      - run: cargo test --workspace
+      - run: rustup component add llvm-tools-preview
+      - run: cargo install grcov
+      - run: |
+          export RUSTFLAGS="-Cinstrument-coverage"
+          export LLVM_PROFILE_FILE="cargo-tests-%p-%m.profraw"
+          cargo test --workspace
+      - run: |
+          grcov . --binary-path ./target/debug/deps/ \
+          --source-dir . \
+          --output-types cobertura \
+          --branch \
+          --ignore-not-existing \
+          --ignore **/tests.rs  \
+          --ignore "/*" \
+          --output-path .
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: Tomasz-Kluczkowski/slack-gcal-sync
 
   build:
     name: Build
