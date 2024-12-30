@@ -4,3 +4,4 @@ target
 .test_data
 .run
 logs
+**/*.profraw

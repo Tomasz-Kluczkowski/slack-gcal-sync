@@ -3,6 +3,8 @@ Synchronise events from Google Calendar to user profile in Slack
 
 ![Lint-Test-Build](https://github.com/Tomasz-Kluczkowski/slack-gcal-sync/actions/workflows/ci.yml/badge.svg)
 
+[![codecov](https://codecov.io/github/Tomasz-Kluczkowski/slack-gcal-sync/graph/badge.svg?token=8AOYDGEMK7)](https://codecov.io/github/Tomasz-Kluczkowski/slack-gcal-sync)
+
 This project is my test ground for learning Rust language.
 The goal is as follows:
 - get google calendar events on a predetermined interval
