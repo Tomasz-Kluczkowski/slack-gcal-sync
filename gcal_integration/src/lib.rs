@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 use chrono::{Datelike, Duration, TimeZone, Utc};
 use google_calendar3::api::Event;
 use google_calendar3::hyper_rustls::HttpsConnector;
