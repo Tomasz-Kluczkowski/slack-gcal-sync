@@ -62,6 +62,11 @@ This file holds application configuration in json format. All keys are required 
 }
 ```
 
+# Setting up integrations required by slack-gcal-sync app
+
+In the following 2 sections you will see how to set up your Slack and Google Cloud Platform to get necessary credentials
+and set up access permissions for slack-gcal-sync app to work.
+
 ## Setting Up Integration With Slack API
 
 - navigate to Slack API new app page: https://api.slack.com/apps?new_app=1
@@ -122,7 +127,126 @@ This file holds application configuration in json format. All keys are required 
 
 ![image](docs/slack_api_integration/images/view_oauth_token.png)
 
-- This can also be found in `Features -> OAuth & Permissions`. 
+- This can also be found in `Features -> OAuth & Permissions`.
+
+## Setting Up Integration With Google Cloud API
+
+### Create Google Cloud Platform Project
+
+- if you already have google account you can just join google cloud platform, otherwise [create a new google account](https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fconsole.cloud.google.com%2Fwelcome%2Fnew&hl=en_US&osid=1&service=cloudconsole&flowName=GlifWebSignIn&flowEntry=AddSession&dsh=S-1187740527%3A1735816831106390&ddm=1).
+- set up [Google Cloud Account](https://console.cloud.google.com/freetrial/signup/tos) - you can select the free trial.
+  - accept Terms of Service and click `AGREE AND CONTINUE`.
+
+    ![image](docs/google_cloud_api_integration/images/join_google_cloud_platform.png)
+
+- Click `Select a project` to use existing or create a new one.
+
+![image](docs/google_cloud_api_integration/images/select_a_google_cloud_platform_project.png)
+
+- Click `NEW PROJECT` (we assume starting from scratch here).
+
+![image](docs/google_cloud_api_integration/images/create_new_google_cloud_platform_project.png)
+
+- Give your project a name and click `CREATE`.
+
+![image](docs/google_cloud_api_integration/images/configure_new_google_cloud_platform_project.png)
+
+### Enable Google Calendar API
+
+- You will see a notification popup, click `SELECT PROJECT`.
+
+![image](docs/google_cloud_api_integration/images/select_google_cloud_platform_project_notification.png)
+
+- Click on hamburger navigation menu.
+
+![image](docs/google_cloud_api_integration/images/google_cloud_platform_navigation_menu.png)
+
+- Click on `APIs & Services` -> `Library` tab.
+
+![image](docs/google_cloud_api_integration/images/apis_services_library_tab.png)
+
+- Scroll down a bit to `Google Workspace` group of apis or just click on it in the sidebar menu and click on `Google Calendar API` box.
+
+![image](docs/google_cloud_api_integration/images/find_google_calendar_api_management_link.png)
+
+- Click `ENABLE` to switch Google Calendar API in your project.
+
+![image](docs/google_cloud_api_integration/images/enable_google_calendar_api.png)
+
+
+### Create Credentials
+
+- Now we need to create a service account to allow machine to machine communication without need for interactive login.
+
+- In the view that appears after you enabled Google Calendar API, click `Credentials` in the sidebar.
+
+![image](docs/google_cloud_api_integration/images/create_google_calendar_api_credentials.png)
+
+- Click `+ CREATE CREDENTIALS`.
+
+![image](docs/google_cloud_api_integration/images/create_google_calendar_api_credentials_1.png)
+
+- Click `Service account`.
+
+![image](docs/google_cloud_api_integration/images/create_service_account_1.png)
+
+- Fill in `Service account name` and optionally `Service account description` and click `DONE` since we don't need to grant any optional permissions here.
+
+![image](docs/google_cloud_api_integration/images/create_service_account_2.png)
+
+- Click on your newly listed service account to add a service account key.
+- Make note of the auto-generated email - we will need it to share Google Calendar with this service account.
+
+![image](docs/google_cloud_api_integration/images/add_service_account_key_1.png)
+
+- Click on `KEYS` tab.
+
+![image](docs/google_cloud_api_integration/images/add_service_account_key_2.png)
+
+- Click on `Add KEY` -> `Create new key`.
+
+![image](docs/google_cloud_api_integration/images/add_service_account_key_3.png)
+
+- In the popup use the default `JSON` key type and click `CREATE`.
+
+![image](docs/google_cloud_api_integration/images/add_service_account_key_4.png)
+
+- The private key in json format will be saved in your `downloads` folder on your machine - keep it safe.
+- This json file is needed by slack-gcal-sync app to authenticate itself to google calendar api. You will need to
+  specify path to it in the app configuration.
+
+![image](docs/google_cloud_api_integration/images/add_service_account_key_5.png)
+
+### Share Google Calendar With Service Account
+
+- open [Google Calendar](https://calendar.google.com/calendar/u/0/r) for your Google account
+- Click on the cog drop down and `Settings`
+
+![image](docs/google_cloud_api_integration/images/share_google_calendar_1.png)
+
+- in `Settings for my calendars` click on the calendar you want to share with the service account
+
+![image](docs/google_cloud_api_integration/images/share_google_calendar_2.png)
+
+- Scroll down to `Share with specific people or groups` and click `Add people and groups`
+
+![image](docs/google_cloud_api_integration/images/share_google_calendar_3.png)
+
+- Fill in the auto-generated email that your service account got from a step above and select appropriate access level. For `read only` use `See all event details`.
+
+![image](docs/google_cloud_api_integration/images/share_google_calendar_4.png)
+
+- Click `Send`
+
+![image](docs/google_cloud_api_integration/images/share_google_calendar_5.png)
+
+### Get calendar id
+
+- The calendar id is needed when making calls to Google calendar API and needs to be set in the slack-gcal-sync app configuration.
+- Simply scroll down on the selected calendar settings page to `Integrate calendar` section and copy `Calendar ID`.
+
+![image](docs/google_cloud_api_integration/images/google_calendar_id.png)
+
 
 ## Debugging tests containing google calendar api calls
 

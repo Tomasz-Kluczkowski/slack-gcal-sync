@@ -9,12 +9,9 @@ mod test_get_calendar_events_for_today {
     use mockito::{Mock, ServerGuard};
     use rsa::rand_core::OsRng;
     use rsa::{pkcs8::EncodePrivateKey, RsaPrivateKey};
-    use std::sync::OnceLock;
-
-    static CRYPTO_PROVIDER_LOCK: OnceLock<()> = OnceLock::new();
 
     fn setup_default_crypto_provider() {
-        CRYPTO_PROVIDER_LOCK.get_or_init(|| rustls::crypto::ring::default_provider().install_default().unwrap());
+        let _ = rustls::crypto::ring::default_provider().install_default();
     }
 
     fn get_google_api_formatted_date(date: DateTime<Utc>) -> String {
