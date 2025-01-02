@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use configuration::{get_application_configuration, read_json_configuration, ApplicationCommandLineArguments};
 use gcal_integration::{get_calendar_events_for_today, get_calendar_hub};
-use google_calendar3::yup_oauth2::ServiceAccountKey;
+use google_calendar3::yup_oauth2::{ServiceAccountAuthenticator, ServiceAccountKey};
 use log::info;
 
 const LOGGING_CONFIG_PATH: &str = "config/logging_config.yaml";
@@ -25,6 +25,14 @@ async fn run() -> Result<()> {
         )
     })?;
 
+    let google_api_error_context = || {
+        format!(
+            "Failed to integrate with Google API using supplied service account key on path '{}'. \
+        Check contents of the service account key json file and further details of the error.",
+            application_configuration.service_account_key_path
+        )
+    };
+
     info!("Reading google calendar service account key.");
     let service_account_key =
         read_json_configuration::<ServiceAccountKey>(&application_configuration.service_account_key_path)
@@ -36,19 +44,18 @@ async fn run() -> Result<()> {
             })?;
     info!("Successfully read google calendar service account key.");
 
-    let google_api_error_context = || {
-        format!(
-            "Failed to integrate with Google API using supplied service account key on path '{}'. \
-        Check contents of the service account key json file and further details of the error.",
-            application_configuration.service_account_key_path
-        )
-    };
-
-    info!("Connecting to google api hub.");
-    let hub = get_calendar_hub(service_account_key)
+    info!("Setting up service account authenticator.");
+    let service_account_authenticator = ServiceAccountAuthenticator::builder(service_account_key)
+        .build()
         .await
         .with_context(google_api_error_context)?;
-    info!("Connected to google api hub.");
+    info!("Successfully set up up service account authenticator.");
+
+    info!("Setting up google api hub.");
+    let hub = get_calendar_hub(service_account_authenticator)
+        .await
+        .with_context(google_api_error_context)?;
+    info!("Successfully set up google api hub.");
 
     info!("Fetching google calendar events for today.");
     let events = get_calendar_events_for_today(hub, application_configuration.calendar_id.as_str())

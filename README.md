@@ -123,3 +123,20 @@ This file holds application configuration in json format. All keys are required 
 ![image](docs/slack_api_integration/images/view_oauth_token.png)
 
 - This can also be found in `Features -> OAuth & Permissions`. 
+
+## Debugging tests containing google calendar api calls
+
+To see what mockito server is being called with:
+- add `env_logger` to dev dependencies
+- set up logger at the beginning of test: `let _ = env_logger::try_init();`
+- run test configuration with environment variable set `RUST_LOG=mockito=debug`
+- mockito server will nicely show what it was called with like this:
+
+```shell
+[2024-12-31T17:42:11Z DEBUG mockito::server] Request received: 
+    GET /calendars/test_calendar_id/events?timeMin=2024-12-31T00%3A00%3A00.000Z&timeMax=2025-01-01T00%3A00%3A00.000Z&alt=json
+    user-agent: google-api-rust-client/6.0.0
+    authorization: Bearer <REDACTED>
+    content-length: 0
+    host: 127.0.0.1:33285
+```

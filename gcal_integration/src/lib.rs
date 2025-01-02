@@ -1,8 +1,11 @@
+#[cfg(test)]
+mod tests;
+
 use chrono::{Datelike, Duration, TimeZone, Utc};
 use google_calendar3::api::Event;
 use google_calendar3::hyper_rustls::HttpsConnector;
 use google_calendar3::hyper_util::client::legacy::connect::HttpConnector;
-use google_calendar3::yup_oauth2::{ServiceAccountAuthenticator, ServiceAccountKey};
+use google_calendar3::yup_oauth2::authenticator::Authenticator;
 use google_calendar3::{hyper_rustls, hyper_util, CalendarHub, Error as GoogleAPIError};
 use thiserror::Error;
 
@@ -16,12 +19,8 @@ pub enum GoogleCalendarIntegrationError {
 }
 
 pub async fn get_calendar_hub(
-    service_account_key: ServiceAccountKey,
+    authenticator: Authenticator<HttpsConnector<HttpConnector>>,
 ) -> Result<CalendarHub<HttpsConnector<HttpConnector>>, GoogleCalendarIntegrationError> {
-    let service_account_authenticator = ServiceAccountAuthenticator::builder(service_account_key)
-        .build()
-        .await?;
-
     let client = hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new()).build(
         hyper_rustls::HttpsConnectorBuilder::new()
             .with_native_roots()?
@@ -29,7 +28,7 @@ pub async fn get_calendar_hub(
             .enable_http1()
             .build(),
     );
-    Ok(CalendarHub::new(client, service_account_authenticator))
+    Ok(CalendarHub::new(client, authenticator))
 }
 
 pub async fn get_calendar_events_for_today(
