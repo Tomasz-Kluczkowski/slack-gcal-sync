@@ -1,5 +1,5 @@
 [workspace]
-members = ["configuration", "gcal_integration"]
+members = ["configuration", "gcal_integration", "slack_integration"]
 
 [package]
 name = "slack-gcal-sync"
