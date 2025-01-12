@@ -10,7 +10,7 @@ The goal is as follows:
 - get google calendar events on a predetermined interval
 - using configuration mapping google calendar event title to slack user profile settings set the new value for slack user profile
 
-## Project Setup
+# Project Setup
 
 Assuming linux Ubuntu as OS or WSL2 with Ubuntu.
 
@@ -38,29 +38,90 @@ cargo build --workspace
 cargo build --release --workspace
 ```
 
+# Application Configuration
+
+You can provide configuration values through application configuration file or purely through command line arguments.
+When using configuration file, all fields are required.
+Command line arguments are optional or have defaults.
+Final configuration is created from a merge of those values.
+
 ## Command line interface
 
 - Run `slack-gcal-sync --help` to see command line interface options.
 
-## Application Configuration
+```shell
+Usage: slack-gcal-sync [OPTIONS]
 
-The application configuration is read in the following order:
+Options:
+  -c, --calendar-id <CALENDAR_ID>
+          The id of the calendar to synchronize. Usually your gmail email account.
+  -s, --service-account-key-path <SERVICE_ACCOUNT_KEY_PATH>
+          Path to the service account key json file from Google Cloud Project.
+  -t, --slack-user-oauth-token-path <SLACK_USER_OAUTH_TOKEN_PATH>
+          Path to the slack user oauth token json file.
+  -a, --application-config-path <APPLICATION_CONFIG_PATH>
+          Path to the application configuration file. [default: config/application_config.json]
+  -h, --help
+          Print help
+  -V, --version
+          Print version
+
+```
+
+
+## Environment variables
+
+- setting slack user oauth token is doable via env var `USER_AUTH_TOKEN` and overrides value read from json file specified in `slack-user-oauth-token-path`.
+
+## Configuration order of precedence
+
+The application configuration is created in the following order:
 - if `--application-config-path` cli option is specified, we try to load it from a `json` file at that path.
-  The application configuration must specify all values for application configuration, or it will fail to load.
+  - the application configuration must specify all values for application configuration, or it will fail to load.
 - if `--application-config-path` cli option is **not** specified, a default application path will be used: `config/application_config.json`.
 - if there is no application config file (at default or specified path) we will set default app config.
-- any CLI options such as `--calendar-id` override what is specified in the application config file or default application config.
+- any CLI options such as `--calendar-id` override what is specified in the final application config.
+- environment variable `USER_AUTH_TOKEN` overrides Slack user oauth token read from file specified at `slack-user-oauth-token-path`.
 
-### Application config file
+## Application config file
 
-This file holds application configuration in json format. All keys are required for configuration to be valid.
+This file holds application configuration in json format.
+The whole file is optional, the configuration can be done purely via command line arguments.
+If providing a config file, **all fields are required**, but can be overridden via CLI arguments.
 
+Example application config file:
 ```json
 {
   "calendar_id":  "my-calendar@gmail.com",
-  "service_account_key_path": ".secrets/.service_account.json"
+  "service_account_key_path": ".secrets/.service_account.json",
+  "slack_user_oauth_token_path": ".secrets/.slack_user_oauth_token.json",
+  "logging_config_path": "config/logging_config.yaml"
 }
 ```
+
+## Application secrets
+
+This section describes secrets required for the application to work.
+
+### Service account key
+
+- Follow instruction in [Setting Up Integration With Google Cloud API](#setting-up-integration-with-google-cloud-api).
+- Once you downloaded the service account key, store it in where `service_account_key_path` specifies.
+
+### Slack User Oauth Token
+
+- Follow instruction in [Setting Up Integration With Slack API](#setting-up-integration-with-slack-api).
+- Copy the user oauth token presented in Slack UI in `Oauth & Permissions` section.
+- Create a json file with a schema as per example below and provide its path in the application configuration.
+
+Example `.slack_user_oauth_token.json` json schema
+
+```json
+{
+  "user_oauth_token": "<REDACTED>"
+}
+```
+
 
 # Setting up integrations required by slack-gcal-sync app
 

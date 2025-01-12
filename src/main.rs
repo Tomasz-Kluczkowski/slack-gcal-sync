@@ -1,19 +1,17 @@
+mod logging;
+
+use crate::logging::setup_default_logger;
 use anyhow::{Context, Result};
 use clap::Parser;
 use configuration::{get_application_configuration, read_json_configuration, ApplicationCommandLineArguments};
 use gcal_integration::{get_calendar_events_for_today, get_calendar_hub};
 use google_calendar3::yup_oauth2::{ServiceAccountAuthenticator, ServiceAccountKey};
 use log::info;
-
-const LOGGING_CONFIG_PATH: &str = "config/logging_config.yaml";
+use log4rs::config::load_config_file;
+use std::path::Path;
 
 async fn run() -> Result<()> {
-    log4rs::init_file(LOGGING_CONFIG_PATH, Default::default()).with_context(|| {
-        format!(
-            "Failed to initialize logging config at path: '{}'.",
-            LOGGING_CONFIG_PATH
-        )
-    })?;
+    let logging_handle = setup_default_logger();
 
     let args = ApplicationCommandLineArguments::parse();
     let application_config_path = args.application_config_path.clone();
@@ -25,6 +23,30 @@ async fn run() -> Result<()> {
         )
     })?;
 
+    if Path::new(application_configuration.logging_config_path.as_str()).exists() {
+        info!(
+            "Loading logging configuration from path: '{}'",
+            application_configuration.logging_config_path
+        );
+        let config_from_file = load_config_file(
+            application_configuration.logging_config_path.as_str(),
+            Default::default(),
+        )
+        .with_context(|| {
+            format!(
+                "Failed to load logging config at path: '{}'.",
+                application_configuration.logging_config_path
+            )
+        })?;
+        logging_handle.set_config(config_from_file);
+        info!("Successfully loaded logging configuration.");
+    } else {
+        info!(
+            "No logging configuration found at path: '{}'. Using default.",
+            application_configuration.logging_config_path
+        );
+    }
+
     let google_api_error_context = || {
         format!(
             "Failed to integrate with Google API using supplied service account key on path '{}'. \
@@ -33,7 +55,10 @@ async fn run() -> Result<()> {
         )
     };
 
-    info!("Reading google calendar service account key.");
+    info!(
+        "Reading google calendar service account key from path: '{}'.",
+        application_configuration.service_account_key_path
+    );
     let service_account_key =
         read_json_configuration::<ServiceAccountKey>(&application_configuration.service_account_key_path)
             .with_context(|| {

@@ -1,4 +1,6 @@
 {
   "calendar_id":  "example@gmail.com",
-  "service_account_key_path": ".secrets/.service_account.json"
+  "service_account_key_path": ".secrets/.service_account.json",
+  "slack_user_oauth_token_path": ".secrets/.slack_user_oauth_token.json",
+  "logging_config_path": "config/logging_config.yaml"
 }

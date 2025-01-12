@@ -1,4 +1,3 @@
-#[cfg(test)]
 mod tests;
 
 use chrono::{Datelike, Duration, TimeZone, Utc};
