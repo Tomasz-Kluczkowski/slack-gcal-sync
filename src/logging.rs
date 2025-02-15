@@ -16,44 +16,63 @@ pub const DEFAULT_CONSOLE_LOG_PATTERN: &str = "{d(%+)(utc)} [{f}:{L}] {h({l})} {
 pub const DEFAULT_ROLLING_FILE_BASE_INDEX: u32 = 0;
 pub const DEFAULT_ROLLING_FILE_ARCHIVE_COUNT: u32 = 5;
 pub const DEFAULT_LOG_FILE_SIZE: u64 = 10 * 1024 * 1024; // 10 MB size limit
+                                                         // pub const DEFAULT_LOG_FILE_SIZE: u64 = 10 * 1024 * 1024; // 10 MB size limit
 pub const DEFAULT_CONSOLE_LOGGER_NAME: &str = "stdout";
 pub const DEFAULT_ROLLING_FILE_LOGGER_NAME: &str = "rollingfile";
 
-fn get_default_log_file_roller_pattern() -> String {
-    format!("{DEFAULT_LOG_FILE_PATH}/{DEFAULT_LOG_FILE_BASE_NAME}-{{}}.{DEFAULT_LOG_FILE_EXTENSION}")
+pub struct LoggerConfigurator {
+    pub log_file_path: Option<String>,
+    pub log_file_roller_pattern: Option<String>,
+    pub log_file_size: Option<u64>,
 }
 
-fn get_default_log_file_path() -> String {
-    format!("{DEFAULT_LOG_FILE_PATH}/{DEFAULT_LOG_FILE_BASE_NAME}.{DEFAULT_LOG_FILE_EXTENSION}")
+impl Default for LoggerConfigurator {
+    fn default() -> Self {
+        LoggerConfigurator {
+            log_file_path: Some(Self::get_default_log_file_path()),
+            log_file_roller_pattern: Some(Self::get_default_log_file_roller_pattern()),
+            log_file_size: Some(DEFAULT_LOG_FILE_SIZE),
+        }
+    }
 }
 
-pub fn setup_default_logger() -> Handle {
-    let stdout = ConsoleAppender::builder()
-        .encoder(Box::new(PatternEncoder::new(DEFAULT_CONSOLE_LOG_PATTERN)))
-        .build();
-    let roller = FixedWindowRoller::builder()
-        .base(DEFAULT_ROLLING_FILE_BASE_INDEX)
-        .build(
-            get_default_log_file_roller_pattern().as_str(),
-            DEFAULT_ROLLING_FILE_ARCHIVE_COUNT,
-        )
-        .unwrap();
-    let trigger = SizeTrigger::new(DEFAULT_LOG_FILE_SIZE);
-    let policy = compound::CompoundPolicy::new(Box::new(trigger), Box::new(roller));
-    let rollingfile = RollingFileAppender::builder()
-        .encoder(Box::new(log4rs::encode::json::JsonEncoder::new()))
-        .build(get_default_log_file_path(), Box::new(policy))
-        .unwrap();
-    let config = Config::builder()
-        .appender(Appender::builder().build(DEFAULT_CONSOLE_LOGGER_NAME, Box::new(stdout)))
-        .appender(Appender::builder().build(DEFAULT_ROLLING_FILE_LOGGER_NAME, Box::new(rollingfile)))
-        .build(
-            Root::builder()
-                .appender(DEFAULT_CONSOLE_LOGGER_NAME)
-                .appender(DEFAULT_ROLLING_FILE_LOGGER_NAME)
-                .build(DEFAULT_LOG_LEVEL),
-        )
-        .unwrap();
+impl LoggerConfigurator {
+    pub fn get_default_log_file_roller_pattern() -> String {
+        format!("{DEFAULT_LOG_FILE_PATH}/{DEFAULT_LOG_FILE_BASE_NAME}-{{}}.{DEFAULT_LOG_FILE_EXTENSION}")
+    }
 
-    log4rs::init_config(config).unwrap()
+    pub fn get_default_log_file_path() -> String {
+        format!("{DEFAULT_LOG_FILE_PATH}/{DEFAULT_LOG_FILE_BASE_NAME}.{DEFAULT_LOG_FILE_EXTENSION}")
+    }
+
+    pub fn setup_logger(&self) -> Handle {
+        let stdout = ConsoleAppender::builder()
+            .encoder(Box::new(PatternEncoder::new(DEFAULT_CONSOLE_LOG_PATTERN)))
+            .build();
+        let roller = FixedWindowRoller::builder()
+            .base(DEFAULT_ROLLING_FILE_BASE_INDEX)
+            .build(
+                self.log_file_roller_pattern.clone().unwrap().as_str(),
+                DEFAULT_ROLLING_FILE_ARCHIVE_COUNT,
+            )
+            .unwrap();
+        let trigger = SizeTrigger::new(self.log_file_size.unwrap());
+        let policy = compound::CompoundPolicy::new(Box::new(trigger), Box::new(roller));
+        let rollingfile = RollingFileAppender::builder()
+            .encoder(Box::new(log4rs::encode::json::JsonEncoder::new()))
+            .build(self.log_file_path.clone().unwrap().as_str(), Box::new(policy))
+            .unwrap();
+        let config = Config::builder()
+            .appender(Appender::builder().build(DEFAULT_CONSOLE_LOGGER_NAME, Box::new(stdout)))
+            .appender(Appender::builder().build(DEFAULT_ROLLING_FILE_LOGGER_NAME, Box::new(rollingfile)))
+            .build(
+                Root::builder()
+                    .appender(DEFAULT_CONSOLE_LOGGER_NAME)
+                    .appender(DEFAULT_ROLLING_FILE_LOGGER_NAME)
+                    .build(DEFAULT_LOG_LEVEL),
+            )
+            .unwrap();
+
+        log4rs::init_config(config).unwrap()
+    }
 }

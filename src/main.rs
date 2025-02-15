@@ -1,6 +1,7 @@
 mod logging;
+mod tests;
 
-use crate::logging::setup_default_logger;
+use crate::logging::LoggerConfigurator;
 use anyhow::{Context, Result};
 use chrono::Utc;
 use clap::Parser;
@@ -18,7 +19,7 @@ use std::env;
 use std::path::Path;
 
 async fn run() -> Result<()> {
-    let logging_handle = setup_default_logger();
+    let logging_handle = LoggerConfigurator::default().setup_logger();
 
     let args = ApplicationCommandLineArguments::parse();
     let application_config_path = args.application_config_path.clone();

@@ -5,3 +5,4 @@ target
 .run
 logs
 **/*.profraw
+test_logs
