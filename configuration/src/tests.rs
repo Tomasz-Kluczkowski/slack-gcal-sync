@@ -1,114 +1,354 @@
 #[cfg(test)]
-mod test_get_application_configuration {
+mod test_application_configuration_getter {
     use crate::{
-        get_application_configuration, ApplicationCommandLineArguments, ApplicationConfiguration, DEFAULT_CALENDAR_ID,
-        DEFAULT_LOGGING_CONFIG_PATH, DEFAULT_SERVICE_ACCOUNT_PATH, DEFAULT_SLACK_USER_OAUTH_TOKEN_PATH,
+        ApplicationConfigurationData, ApplicationConfigurationGetter, ConfigurationError, SlackUserOauthToken,
     };
+    use google_calendar3::yup_oauth2::ServiceAccountKey;
     use rstest::{fixture, rstest};
     use std::io::Write;
     use tempfile::NamedTempFile;
 
     #[fixture]
-    fn app_config_file_data() -> ApplicationConfiguration {
-        ApplicationConfiguration {
-            calendar_id: "calendar@gmail.com".to_string(),
-            service_account_key_path: "path/.service_account_key.json".to_string(),
-            slack_user_oauth_token_path: "path/.slack_user_oauth_token.json".to_string(),
-            logging_config_path: "path/logging_config.yaml".to_string(),
+    fn file_app_config_data() -> ApplicationConfigurationData {
+        ApplicationConfigurationData {
+            calendar_id: Some("calendar@gmail.com".to_string()),
+            service_account_key_path: Some("path/.service_account_key.json".to_string()),
+            slack_user_oauth_token_path: Some("path/.slack_user_oauth_token.json".to_string()),
+            slack_user_oauth_token: None,
+            logging_config_path: Some("path/logging_config.yaml".to_string()),
+            application_config_path: None,
         }
     }
 
-    #[rstest]
-    fn it_should_read_application_configuration_file(app_config_file_data: ApplicationConfiguration) {
-        // application config path specified in command line args,
-        // specified app config file should be used,
-        // resulting config should match what is in application config json file.
+    #[fixture]
+    fn service_account_key() -> ServiceAccountKey {
+        ServiceAccountKey {
+            key_type: Some("service_account".to_string()),
+            project_id: Some("project_id".to_string()),
+            private_key_id: Some("private_key_id".to_string()),
+            private_key: "-----BEGIN PRIVATE KEY-----\nMIIE".to_string(),
+            client_email: "test@test.com".to_string(),
+            client_id: Some("client_id".to_string()),
+            auth_uri: Some("https://accounts.google.com/o/oauth2/auth".to_string()),
+            token_uri: "https://oauth2.googleapis.com/token".to_string(),
+            auth_provider_x509_cert_url: Some("https://www.googleapis.com/oauth2/v1/certs".to_string()),
+            client_x509_cert_url: Some(
+                "https://www.googleapis.com/robot/v1/metadata/x509/example.gserviceaccount.com".to_string(),
+            ),
+        }
+    }
+
+    #[fixture]
+    fn slack_user_oauth_token() -> SlackUserOauthToken {
+        SlackUserOauthToken {
+            user_oauth_token: "redacted".to_string(),
+        }
+    }
+
+    fn write_json_to_temp_file<T: serde::Serialize>(data: &T) -> NamedTempFile {
         let mut file = NamedTempFile::new().unwrap();
-        let app_config_path = file.path().to_str().unwrap().to_string();
-        let args = ApplicationCommandLineArguments {
+        let json_data = serde_json::to_string_pretty(data).unwrap();
+        file.write_all(json_data.as_bytes()).unwrap();
+        file
+    }
+
+    #[rstest]
+    fn it_should_create_new_instance_using_default_application_configuration_data_when_no_configuration_file_found() {
+        let cli_app_config_data = ApplicationConfigurationData {
             calendar_id: None,
             service_account_key_path: None,
             slack_user_oauth_token_path: None,
+            slack_user_oauth_token: None,
             logging_config_path: None,
-            application_config_path: app_config_path,
+            application_config_path: None,
         };
 
-        let json = serde_json::to_string_pretty(&app_config_file_data).unwrap();
-        file.write_all(&json.as_bytes()).unwrap();
+        let application_configuration_getter =
+            ApplicationConfigurationGetter::new(cli_app_config_data.clone()).unwrap();
 
-        let output_app_config = get_application_configuration(args).unwrap();
-        assert_eq!(output_app_config.calendar_id, app_config_file_data.calendar_id);
         assert_eq!(
-            output_app_config.service_account_key_path,
-            app_config_file_data.service_account_key_path
+            application_configuration_getter.cli_application_configuration_data,
+            cli_app_config_data
         );
         assert_eq!(
-            output_app_config.slack_user_oauth_token_path,
-            app_config_file_data.slack_user_oauth_token_path
+            application_configuration_getter.file_application_configuration_data,
+            ApplicationConfigurationData::default()
+        );
+    }
+
+    #[rstest]
+    fn test_get_application_configuration_using_config_file_path(
+        mut file_app_config_data: ApplicationConfigurationData,
+        service_account_key: ServiceAccountKey,
+        slack_user_oauth_token: SlackUserOauthToken,
+    ) {
+        let service_account_key_file = write_json_to_temp_file(&service_account_key);
+        let service_account_key_path = service_account_key_file.path().to_str().unwrap().to_string();
+
+        let slack_user_oauth_token_file = write_json_to_temp_file(&slack_user_oauth_token);
+        let slack_user_oauth_token_path = slack_user_oauth_token_file.path().to_str().unwrap().to_string();
+
+        file_app_config_data.service_account_key_path = Some(service_account_key_path);
+        file_app_config_data.slack_user_oauth_token_path = Some(slack_user_oauth_token_path);
+        let application_config_file = write_json_to_temp_file(&file_app_config_data);
+        let app_config_path = application_config_file.path().to_str().unwrap().to_string();
+
+        let cli_app_config_data = ApplicationConfigurationData {
+            calendar_id: None,
+            service_account_key_path: None,
+            slack_user_oauth_token_path: None,
+            slack_user_oauth_token: None,
+            logging_config_path: None,
+            application_config_path: Some(app_config_path),
+        };
+
+        let calendar_id = file_app_config_data.calendar_id.clone().unwrap();
+        let logging_config_path = file_app_config_data.logging_config_path.clone().unwrap();
+        let application_configuration_getter = ApplicationConfigurationGetter::new(cli_app_config_data).unwrap();
+
+        let output_configuration = application_configuration_getter
+            .get_application_configuration()
+            .unwrap();
+
+        assert_eq!(output_configuration.calendar_id, calendar_id);
+
+        assert_eq!(
+            output_configuration.service_account_key.key_type,
+            service_account_key.key_type
         );
         assert_eq!(
-            output_app_config.logging_config_path,
-            app_config_file_data.logging_config_path
+            output_configuration.service_account_key.project_id,
+            service_account_key.project_id
         );
-        file.close().unwrap();
+        assert_eq!(
+            output_configuration.service_account_key.private_key_id,
+            service_account_key.private_key_id
+        );
+        assert_eq!(
+            output_configuration.service_account_key.private_key,
+            service_account_key.private_key
+        );
+        assert_eq!(
+            output_configuration.service_account_key.client_email,
+            service_account_key.client_email
+        );
+        assert_eq!(
+            output_configuration.service_account_key.client_id,
+            service_account_key.client_id
+        );
+        assert_eq!(
+            output_configuration.service_account_key.auth_uri,
+            service_account_key.auth_uri
+        );
+        assert_eq!(
+            output_configuration.service_account_key.token_uri,
+            service_account_key.token_uri
+        );
+        assert_eq!(
+            output_configuration.service_account_key.auth_provider_x509_cert_url,
+            service_account_key.auth_provider_x509_cert_url
+        );
+        assert_eq!(
+            output_configuration.service_account_key.client_x509_cert_url,
+            service_account_key.client_x509_cert_url
+        );
+
+        assert_eq!(
+            output_configuration.slack_user_oauth_token,
+            slack_user_oauth_token.user_oauth_token
+        );
+        assert_eq!(output_configuration.logging_config_path, logging_config_path);
+    }
+
+    #[rstest]
+    fn test_get_application_configuration_uses_cli_arguments_to_override_file_based_configuration(
+        file_app_config_data: ApplicationConfigurationData,
+        service_account_key: ServiceAccountKey,
+        slack_user_oauth_token: SlackUserOauthToken,
+    ) {
+        let service_account_key_file = write_json_to_temp_file(&service_account_key);
+        let service_account_key_path = service_account_key_file.path().to_str().unwrap().to_string();
+
+        let slack_user_oauth_token_file = write_json_to_temp_file(&slack_user_oauth_token);
+        let slack_user_oauth_token_path = slack_user_oauth_token_file.path().to_str().unwrap().to_string();
+
+        let application_config_file = write_json_to_temp_file(&file_app_config_data);
+        let app_config_path = application_config_file.path().to_str().unwrap().to_string();
+
+        let slack_user_oauth_token_value = "fake_token";
+        let cli_app_config_data = ApplicationConfigurationData {
+            calendar_id: Some("overridden_calendar_id".to_string()),
+            service_account_key_path: Some(service_account_key_path),
+            slack_user_oauth_token_path: Some(slack_user_oauth_token_path),
+            slack_user_oauth_token: Some(slack_user_oauth_token_value.to_string()),
+            logging_config_path: Some("overridden_logging_config_path".to_string()),
+            application_config_path: Some(app_config_path),
+        };
+
+        let calendar_id = cli_app_config_data.calendar_id.clone().unwrap();
+        let logging_config_path = cli_app_config_data.logging_config_path.clone().unwrap();
+        let application_configuration_getter = ApplicationConfigurationGetter::new(cli_app_config_data).unwrap();
+
+        let output_configuration = application_configuration_getter
+            .get_application_configuration()
+            .unwrap();
+
+        assert_eq!(output_configuration.calendar_id, calendar_id);
+
+        assert_eq!(
+            output_configuration.service_account_key.key_type,
+            service_account_key.key_type
+        );
+        assert_eq!(
+            output_configuration.service_account_key.project_id,
+            service_account_key.project_id
+        );
+        assert_eq!(
+            output_configuration.service_account_key.private_key_id,
+            service_account_key.private_key_id
+        );
+        assert_eq!(
+            output_configuration.service_account_key.private_key,
+            service_account_key.private_key
+        );
+        assert_eq!(
+            output_configuration.service_account_key.client_email,
+            service_account_key.client_email
+        );
+        assert_eq!(
+            output_configuration.service_account_key.client_id,
+            service_account_key.client_id
+        );
+        assert_eq!(
+            output_configuration.service_account_key.auth_uri,
+            service_account_key.auth_uri
+        );
+        assert_eq!(
+            output_configuration.service_account_key.token_uri,
+            service_account_key.token_uri
+        );
+        assert_eq!(
+            output_configuration.service_account_key.auth_provider_x509_cert_url,
+            service_account_key.auth_provider_x509_cert_url
+        );
+        assert_eq!(
+            output_configuration.service_account_key.client_x509_cert_url,
+            service_account_key.client_x509_cert_url
+        );
+
+        assert_eq!(
+            output_configuration.slack_user_oauth_token,
+            slack_user_oauth_token_value
+        );
+        assert_eq!(output_configuration.logging_config_path, logging_config_path);
     }
 
     #[test]
-    fn it_should_use_default_application_configuration() {
-        // no command line args at all, specified app config file does not exist.
-        // default config values should be used.
-        let args = ApplicationCommandLineArguments {
+    fn test_get_application_configuration_validates_merged_configuration_and_returns_missing_arguments() {
+        // Currently, an application config path is always specified in default cli arguments if missing, so it is not
+        // possible to fail validation for it. To avoid using a default application config path, we specify it in cli args.
+        let file_app_config_data = ApplicationConfigurationData {
             calendar_id: None,
             service_account_key_path: None,
             slack_user_oauth_token_path: None,
+            slack_user_oauth_token: None,
             logging_config_path: None,
-            application_config_path: "non_existent_app_config.json".to_string(),
+            application_config_path: None,
         };
 
-        let app_config = get_application_configuration(args).unwrap();
-        assert_eq!(app_config.calendar_id, DEFAULT_CALENDAR_ID.to_string());
-        assert_eq!(
-            app_config.service_account_key_path,
-            DEFAULT_SERVICE_ACCOUNT_PATH.to_string()
-        );
-        assert_eq!(
-            app_config.slack_user_oauth_token_path,
-            DEFAULT_SLACK_USER_OAUTH_TOKEN_PATH.to_string()
-        );
-        assert_eq!(app_config.logging_config_path, DEFAULT_LOGGING_CONFIG_PATH.to_string());
+        let application_config_file = write_json_to_temp_file(&file_app_config_data);
+        let app_config_path = application_config_file.path().to_str().unwrap().to_string();
+
+        let cli_app_config_data = ApplicationConfigurationData {
+            calendar_id: None,
+            service_account_key_path: None,
+            slack_user_oauth_token_path: None,
+            slack_user_oauth_token: None,
+            logging_config_path: None,
+            application_config_path: Some(app_config_path),
+        };
+
+        let application_configuration_getter = ApplicationConfigurationGetter::new(cli_app_config_data).unwrap();
+
+        let invalid_result = application_configuration_getter.get_application_configuration();
+        assert!(matches!(
+            invalid_result,
+            Err(ConfigurationError::InvalidConfigurationError { .. })
+        ));
+        let error_contents = invalid_result.unwrap_err().to_string();
+        assert!(error_contents.contains("calendar_id is required"));
+        assert!(error_contents.contains("service_account_key_path is required"));
+        assert!(error_contents.contains("Either slack_user_oauth_token_path or slack_user_oauth_token must be set"));
+        assert!(error_contents.contains("logging_config_path is required"))
     }
 
     #[rstest]
-    fn it_should_use_command_line_args(app_config_file_data: ApplicationConfiguration) {
-        // all app config command line args specified,
-        // specified app config file should be used, but values should be overridden by cli args.
-        // resulting config should match cli args.
-        let mut file = NamedTempFile::new().unwrap();
-        let app_config_path = file.path().to_str().unwrap().to_string();
-        let calendar_id_arg = "overridden@gmail.com".to_string();
-        let service_account_key_path_arg = "overridden_service_account_key.json".to_string();
-        let slack_user_oauth_token_path_arg = "overridden_slack_user_oauth_token.json".to_string();
-        let logging_config_arg = "overridden_logging_config.yaml".to_string();
-        let args = ApplicationCommandLineArguments {
-            calendar_id: Some(calendar_id_arg.clone()),
-            service_account_key_path: Some(service_account_key_path_arg.clone()),
-            slack_user_oauth_token_path: Some(slack_user_oauth_token_path_arg.clone()),
-            logging_config_path: Some(logging_config_arg.clone()),
-            application_config_path: app_config_path,
+    fn test_get_application_configuration_reports_invalid_service_account_key(
+        mut file_app_config_data: ApplicationConfigurationData,
+    ) {
+        let service_account_key_path = "invalid_path/service_account_key.json";
+        file_app_config_data.service_account_key_path = Some(service_account_key_path.to_string());
+
+        let application_config_file = write_json_to_temp_file(&file_app_config_data);
+        let app_config_path = application_config_file.path().to_str().unwrap().to_string();
+
+        let cli_app_config_data = ApplicationConfigurationData {
+            calendar_id: None,
+            service_account_key_path: None,
+            slack_user_oauth_token_path: None,
+            slack_user_oauth_token: None,
+            logging_config_path: None,
+            application_config_path: Some(app_config_path),
         };
 
-        let json = serde_json::to_string_pretty(&app_config_file_data).unwrap();
-        file.write_all(&json.as_bytes()).unwrap();
+        let application_configuration_getter = ApplicationConfigurationGetter::new(cli_app_config_data).unwrap();
 
-        let output_app_config = get_application_configuration(args).unwrap();
-        assert_eq!(output_app_config.calendar_id, calendar_id_arg);
-        assert_eq!(output_app_config.service_account_key_path, service_account_key_path_arg);
-        assert_eq!(
-            output_app_config.slack_user_oauth_token_path,
-            slack_user_oauth_token_path_arg
-        );
-        assert_eq!(output_app_config.logging_config_path, logging_config_arg);
-        file.close().unwrap();
+        let invalid_result = application_configuration_getter.get_application_configuration();
+        assert!(matches!(
+            invalid_result,
+            Err(ConfigurationError::DeserializeConfigurationError { .. })
+        ));
+        let error_contents = invalid_result.unwrap_err().to_string();
+        assert!(error_contents.contains(service_account_key_path));
+        assert!(error_contents.contains("Cannot deserialize configuration from path:"));
+        assert!(error_contents.contains("Cannot read configuration"));
+    }
+
+    #[rstest]
+    fn test_get_application_configuration_reports_invalid_slack_user_oath_token_file(
+        mut file_app_config_data: ApplicationConfigurationData,
+        service_account_key: ServiceAccountKey,
+    ) {
+        let service_account_key_file = write_json_to_temp_file(&service_account_key);
+        let service_account_key_path = service_account_key_file.path().to_str().unwrap().to_string();
+        file_app_config_data.service_account_key_path = Some(service_account_key_path);
+
+        let slack_user_oauth_token_path = "invalid_path/slack_user_oauth_token.json";
+        file_app_config_data.slack_user_oauth_token_path = Some(slack_user_oauth_token_path.to_string());
+
+        let application_config_file = write_json_to_temp_file(&file_app_config_data);
+        let app_config_path = application_config_file.path().to_str().unwrap().to_string();
+
+        let cli_app_config_data = ApplicationConfigurationData {
+            calendar_id: None,
+            service_account_key_path: None,
+            slack_user_oauth_token_path: None,
+            slack_user_oauth_token: None,
+            logging_config_path: None,
+            application_config_path: Some(app_config_path),
+        };
+
+        let application_configuration_getter = ApplicationConfigurationGetter::new(cli_app_config_data).unwrap();
+
+        let invalid_result = application_configuration_getter.get_application_configuration();
+        assert!(matches!(
+            invalid_result,
+            Err(ConfigurationError::DeserializeConfigurationError { .. })
+        ));
+        let error_contents = invalid_result.unwrap_err().to_string();
+        assert!(error_contents.contains(slack_user_oauth_token_path));
+        assert!(error_contents.contains("Cannot deserialize configuration from path:"));
+        assert!(error_contents.contains("Cannot read configuration"));
     }
 }
 
