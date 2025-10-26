@@ -9,7 +9,6 @@ use configuration::{ApplicationConfigurationData, ApplicationConfigurationGetter
 use gcal_integration::{get_calendar_events_for_today, get_calendar_hub};
 use google_calendar3::yup_oauth2::ServiceAccountAuthenticator;
 use log::info;
-use log4rs::config::load_config_file;
 use reqwest::Client;
 use slack_integration::{
     ProfileData, ProfileRequestBody, SlackApiClient, SLACK_API_BASE_URL, SLACK_USER_PROFILE_GET_ENDPOINT,
@@ -18,29 +17,27 @@ use slack_integration::{
 use std::path::Path;
 
 async fn run() -> Result<()> {
-    let logging_handle = LoggerConfigurator::default().setup_logger();
-    let cli_application_configuration_data = ApplicationConfigurationData::parse();
+    info!("Starting application.");
+    info!("Setting up default logging.");
+    let logger_configurator = LoggerConfigurator::default();
+    let logging_handle = logger_configurator.setup_default_logger();
 
+    info!("Parsing command line arguments.");
+    let cli_application_configuration_data = ApplicationConfigurationData::parse();
+    info!("Successfully parsed command line arguments.");
+
+    info!("Loading application configuration.");
     let application_configuration_getter = ApplicationConfigurationGetter::new(cli_application_configuration_data);
     let application_configuration = application_configuration_getter?.get_application_configuration()?;
+    info!("Successfully loaded application configuration.");
 
-    // TODO: move this to logging module
     if Path::new(application_configuration.logging_config_path.as_str()).exists() {
         info!(
             "Loading logging configuration from path: '{}'",
             application_configuration.logging_config_path
         );
-        let config_from_file = load_config_file(
-            application_configuration.logging_config_path.as_str(),
-            Default::default(),
-        )
-        .with_context(|| {
-            format!(
-                "Failed to load logging config at path: '{}'.",
-                application_configuration.logging_config_path
-            )
-        })?;
-        logging_handle.set_config(config_from_file);
+        logger_configurator
+            .apply_logging_config_from_file(application_configuration.logging_config_path.as_str(), &logging_handle)?;
         info!("Successfully loaded logging configuration.");
     } else {
         info!(
