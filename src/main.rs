@@ -1,7 +1,3 @@
-mod logging;
-mod tests;
-
-use crate::logging::LoggerConfigurator;
 use anyhow::{Context, Result};
 use chrono::Utc;
 use clap::Parser;
@@ -9,6 +5,7 @@ use configuration::{ApplicationConfigurationData, ApplicationConfigurationGetter
 use gcal_integration::{get_calendar_events_for_today, get_calendar_hub};
 use google_calendar3::yup_oauth2::ServiceAccountAuthenticator;
 use log::info;
+use logging::LoggerConfigurator;
 use reqwest::Client;
 use slack_integration::{
     ProfileData, ProfileRequestBody, SlackApiClient, SLACK_API_BASE_URL, SLACK_USER_PROFILE_GET_ENDPOINT,

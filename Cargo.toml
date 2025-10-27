@@ -1,5 +1,5 @@
 [workspace]
-members = ["configuration", "gcal_integration", "slack_integration"]
+members = ["configuration", "gcal_integration", "logging", "slack_integration"]
 
 [package]
 name = "slack-gcal-sync"
@@ -10,6 +10,7 @@ edition = "2021"
 configuration = { path = "configuration"}
 gcal_integration = { path = "gcal_integration"}
 slack_integration = { path = "slack_integration"}
+logging = { path = "logging" }
 tokio = { version = "1.43.0", features = ["rt", "rt-multi-thread", "macros"] }
 clap = { version = "4.5.23", features = ["derive"] }
 google-calendar3 = "6.0.0"

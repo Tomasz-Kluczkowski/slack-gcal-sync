@@ -1,11 +1,12 @@
 #[cfg(test)]
 mod test_logging {
-    use crate::logging::DEFAULT_LOG_FILE_EXTENSION;
-    use crate::logging::DEFAULT_LOG_FILE_PATH;
-    use crate::logging::{LoggerConfigurator, DEFAULT_LOG_FILE_SIZE};
-    use crate::logging::{LoggerError, DEFAULT_LOG_FILE_BASE_NAME};
+
+    use crate::DEFAULT_LOG_FILE_BASE_NAME;
+    use crate::DEFAULT_LOG_FILE_EXTENSION;
+    use crate::LoggerConfigurator;
+    use crate::{DEFAULT_LOG_FILE_PATH, DEFAULT_LOG_FILE_SIZE, LoggerError};
     use log::{error, info, warn};
-    use std::fs::{create_dir_all, read_to_string, remove_dir_all, File};
+    use std::fs::{File, create_dir_all, read_to_string, remove_dir_all};
     use std::io::{Seek, SeekFrom, Write};
     use tempfile::NamedTempFile;
 
@@ -185,12 +186,14 @@ mod test_logging {
         ));
         let error_contents = invalid_result.unwrap_err().to_string();
 
-        assert!(error_contents.contains(
-            format!(
-                "Cannot read logger configuration at path: {}. No such file or directory (os error 2)",
-                non_existent_config_path
+        assert!(
+            error_contents.contains(
+                format!(
+                    "Cannot read logger configuration at path: {}. No such file or directory (os error 2)",
+                    non_existent_config_path
+                )
+                .as_str()
             )
-            .as_str()
-        ));
+        );
     }
 }

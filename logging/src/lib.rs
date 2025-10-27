@@ -1,10 +1,12 @@
+mod tests;
+
 use log::LevelFilter;
 use log4rs::append::console::ConsoleAppender;
+use log4rs::append::rolling_file::RollingFileAppender;
 use log4rs::append::rolling_file::policy::compound;
 use log4rs::append::rolling_file::policy::compound::roll::fixed_window::FixedWindowRoller;
 use log4rs::append::rolling_file::policy::compound::trigger::size::SizeTrigger;
-use log4rs::append::rolling_file::RollingFileAppender;
-use log4rs::config::{load_config_file, Appender, Root};
+use log4rs::config::{Appender, Root, load_config_file};
 use log4rs::encode::pattern::PatternEncoder;
 use log4rs::{Config, Handle};
 use thiserror::Error;
@@ -17,7 +19,7 @@ pub const DEFAULT_CONSOLE_LOG_PATTERN: &str = "{d(%+)(utc)} [{f}:{L}] {h({l})} {
 pub const DEFAULT_ROLLING_FILE_BASE_INDEX: u32 = 0;
 pub const DEFAULT_ROLLING_FILE_ARCHIVE_COUNT: u32 = 5;
 pub const DEFAULT_LOG_FILE_SIZE: u64 = 10 * 1024 * 1024; // 10 MB size limit
-                                                         // pub const DEFAULT_LOG_FILE_SIZE: u64 = 10 * 1024 * 1024; // 10 MB size limit
+// pub const DEFAULT_LOG_FILE_SIZE: u64 = 10 * 1024 * 1024; // 10 MB size limit
 pub const DEFAULT_CONSOLE_LOGGER_NAME: &str = "stdout";
 pub const DEFAULT_ROLLING_FILE_LOGGER_NAME: &str = "rollingfile";
 
