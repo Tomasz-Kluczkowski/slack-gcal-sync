@@ -20,7 +20,7 @@ repos:
       - id: cargo testing
         name: cargo testing
         description: Test entire workspace
-        entry: cargo test --workspace
+        entry: cargo nextest run --workspace
         language: system
         pass_filenames: false
   - repo: local
