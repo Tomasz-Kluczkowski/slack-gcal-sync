@@ -2235,12 +2235,9 @@ dependencies = [
  "gcal_integration",
  "google-calendar3",
  "log",
- "log4rs",
  "logging",
  "reqwest",
  "slack_integration",
- "tempfile",
- "thiserror",
  "tokio",
 ]
 

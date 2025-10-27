@@ -16,7 +16,7 @@ use std::path::Path;
 async fn run() -> Result<()> {
     info!("Starting application.");
     info!("Setting up default logging.");
-    let logger_configurator = LoggerConfigurator::default();
+    let mut logger_configurator = LoggerConfigurator::default();
     let logging_handle = logger_configurator.setup_default_logger();
 
     info!("Parsing command line arguments.");

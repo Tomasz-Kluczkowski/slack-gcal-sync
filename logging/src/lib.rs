@@ -9,6 +9,8 @@ use log4rs::append::rolling_file::policy::compound::trigger::size::SizeTrigger;
 use log4rs::config::{Appender, Root, load_config_file};
 use log4rs::encode::pattern::PatternEncoder;
 use log4rs::{Config, Handle};
+use std::fs::remove_dir_all;
+use std::path::Path;
 use thiserror::Error;
 
 pub const DEFAULT_LOG_LEVEL: LevelFilter = LevelFilter::Info;
@@ -19,7 +21,6 @@ pub const DEFAULT_CONSOLE_LOG_PATTERN: &str = "{d(%+)(utc)} [{f}:{L}] {h({l})} {
 pub const DEFAULT_ROLLING_FILE_BASE_INDEX: u32 = 0;
 pub const DEFAULT_ROLLING_FILE_ARCHIVE_COUNT: u32 = 5;
 pub const DEFAULT_LOG_FILE_SIZE: u64 = 10 * 1024 * 1024; // 10 MB size limit
-// pub const DEFAULT_LOG_FILE_SIZE: u64 = 10 * 1024 * 1024; // 10 MB size limit
 pub const DEFAULT_CONSOLE_LOGGER_NAME: &str = "stdout";
 pub const DEFAULT_ROLLING_FILE_LOGGER_NAME: &str = "rollingfile";
 
@@ -86,12 +87,21 @@ impl LoggerConfigurator {
     }
 
     pub fn apply_logging_config_from_file(
-        &self,
+        &mut self,
         logging_config_path: &str,
         logging_handle: &Handle,
     ) -> Result<(), LoggerError> {
         match load_config_file(logging_config_path, Default::default()) {
             Ok(config_from_file) => {
+                // When setting up logger from file, we no longer rely on values set buy default setup.
+                let log_file_path = self.log_file_path.clone().unwrap();
+                let log_file_folder = Path::new(&log_file_path).parent().unwrap();
+                if log_file_folder.exists() {
+                    remove_dir_all(log_file_folder).unwrap();
+                }
+                self.log_file_path = None;
+                self.log_file_roller_pattern = None;
+                self.log_file_size = None;
                 logging_handle.set_config(config_from_file);
                 Ok(())
             }
