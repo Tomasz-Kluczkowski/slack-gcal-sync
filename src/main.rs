@@ -9,8 +9,8 @@ use log::{debug, info};
 use logging::LoggerConfigurator;
 use reqwest::Client;
 use slack_web_api::{
-    ProfileData, ProfileRequestBody, SlackApiClient, SLACK_API_BASE_URL, SLACK_USER_PROFILE_GET_ENDPOINT,
-    SLACK_USER_PROFILE_SET_ENDPOINT,
+    ProfileData, ProfileRequestBody, SLACK_API_BASE_URL, SLACK_USER_PROFILE_GET_ENDPOINT,
+    SLACK_USER_PROFILE_SET_ENDPOINT, SlackApiClient,
 };
 
 fn configure_application() -> Result<ApplicationConfiguration> {

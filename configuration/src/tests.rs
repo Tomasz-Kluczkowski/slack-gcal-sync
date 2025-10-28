@@ -361,7 +361,7 @@ mod test_read_json_configuration {
     use serde::{Deserialize, Serialize};
     use tempfile::NamedTempFile;
 
-    use crate::{read_json_configuration, ConfigurationError};
+    use crate::{ConfigurationError, read_json_configuration};
 
     #[derive(Serialize, Deserialize, Debug, PartialEq)]
     struct TestPerson {
@@ -405,10 +405,12 @@ mod test_read_json_configuration {
             error,
             Err(ConfigurationError::DeserializeConfigurationError { .. })
         ));
-        assert!(error
-            .unwrap_err()
-            .to_string()
-            .contains("Cannot deserialize configuration"));
+        assert!(
+            error
+                .unwrap_err()
+                .to_string()
+                .contains("Cannot deserialize configuration")
+        );
         file.close().unwrap();
     }
 }

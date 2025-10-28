@@ -5,7 +5,7 @@ use std::{fs::File, path::Path};
 use clap::Parser;
 use google_calendar3::yup_oauth2::ServiceAccountKey;
 use log::info;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 const DEFAULT_SERVICE_ACCOUNT_PATH: &str = ".secrets/.service_account.json";
@@ -22,7 +22,9 @@ pub enum ConfigurationError {
     #[error("Cannot deserialize configuration from path: {0}. {1}")]
     DeserializeConfigurationError(String, String),
 
-    #[error("Missing value(s) for application configuration: {0}. Check application configuration file and command line arguments/environment variables.")]
+    #[error(
+        "Missing value(s) for application configuration: {0}. Check application configuration file and command line arguments/environment variables."
+    )]
     InvalidConfigurationError(String),
 }
 

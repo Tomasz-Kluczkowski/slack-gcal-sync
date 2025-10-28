@@ -5,8 +5,8 @@ mod test_slack_api_client {
     use serde_json::Value;
 
     use crate::{
-        ProfileData, ProfileRequestBody, SlackApiClient, SlackApiError, INVALID_AUTH, SLACK_USER_PROFILE_GET_ENDPOINT,
-        SLACK_USER_PROFILE_SET_ENDPOINT, UNKNOWN_METHOD,
+        INVALID_AUTH, ProfileData, ProfileRequestBody, SLACK_USER_PROFILE_GET_ENDPOINT,
+        SLACK_USER_PROFILE_SET_ENDPOINT, SlackApiClient, SlackApiError, UNKNOWN_METHOD,
     };
 
     async fn get_mock_user_profile_setup(
@@ -137,10 +137,12 @@ mod test_slack_api_client {
         let slack_api_client = SlackApiClient::new("fake_url".to_string(), mock_auth_token.to_string(), Client::new());
         let error = slack_api_client.get_user_profile(SLACK_USER_PROFILE_GET_ENDPOINT).await;
         assert!(matches!(error, Err(SlackApiError::ResponseError { .. })));
-        assert!(error
-            .unwrap_err()
-            .to_string()
-            .contains("Failed to make request to Slack api: "));
+        assert!(
+            error
+                .unwrap_err()
+                .to_string()
+                .contains("Failed to make request to Slack api: ")
+        );
     }
 
     #[tokio::test]
@@ -189,11 +191,11 @@ mod test_slack_api_client {
         assert!(matches!(error, Err(SlackApiError::UnknownSlackApiMethodError { .. })));
         assert_eq!(
             error.unwrap_err().to_string(),
-           format!(
-               "Unknown Slack api called: {}/{}. Check request URL matches list of available apis: https://api.slack.com/apis.",
-               mock_slack_api_server.url(),
-               unknown_endpoint
-           )
+            format!(
+                "Unknown Slack api called: {}/{}. Check request URL matches list of available apis: https://api.slack.com/apis.",
+                mock_slack_api_server.url(),
+                unknown_endpoint
+            )
         );
     }
 

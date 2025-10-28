@@ -2,13 +2,13 @@ mod tests;
 
 use chrono::{Datelike, Duration, TimeZone, Utc};
 use google_calendar3::{
+    CalendarHub, Error as GoogleAPIError,
     api::Event,
     hyper_rustls,
     hyper_rustls::HttpsConnector,
     hyper_util,
     hyper_util::client::legacy::connect::HttpConnector,
-    yup_oauth2::{authenticator::Authenticator, ServiceAccountAuthenticator, ServiceAccountKey},
-    CalendarHub, Error as GoogleAPIError,
+    yup_oauth2::{ServiceAccountAuthenticator, ServiceAccountKey, authenticator::Authenticator},
 };
 use log::info;
 use thiserror::Error;
