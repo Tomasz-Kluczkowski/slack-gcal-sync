@@ -709,7 +709,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "gcal_integration"
+name = "gcal_web_api"
 version = "0.1.0"
 dependencies = [
  "chrono",
@@ -2233,12 +2233,11 @@ dependencies = [
  "chrono",
  "clap",
  "configuration",
- "gcal_integration",
- "google-calendar3",
+ "gcal_web_api",
  "log",
  "logging",
  "reqwest",
- "slack_integration",
+ "slack_web_api",
  "tokio",
 ]
 
@@ -2247,7 +2246,7 @@ name = "slack_gcal_sync"
 version = "0.1.0"
 
 [[package]]
-name = "slack_integration"
+name = "slack_web_api"
 version = "0.1.0"
 dependencies = [
  "env_logger",
