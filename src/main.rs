@@ -1,27 +1,26 @@
+use std::path::Path;
+
 use anyhow::{Context, Result};
 use chrono::Utc;
 use clap::Parser;
-use configuration::{ApplicationConfigurationData, ApplicationConfigurationGetter};
-use gcal_integration::{get_calendar_events_for_today, get_calendar_hub};
-use google_calendar3::yup_oauth2::ServiceAccountAuthenticator;
-use log::info;
+use configuration::{ApplicationConfiguration, ApplicationConfigurationData, ApplicationConfigurationGetter};
+use gcal_integration::{get_calendar_events_for_today, get_calendar_hub, get_service_account_authenticator};
+use log::{debug, info};
 use logging::LoggerConfigurator;
 use reqwest::Client;
 use slack_integration::{
     ProfileData, ProfileRequestBody, SlackApiClient, SLACK_API_BASE_URL, SLACK_USER_PROFILE_GET_ENDPOINT,
     SLACK_USER_PROFILE_SET_ENDPOINT,
 };
-use std::path::Path;
 
-async fn run() -> Result<()> {
-    info!("Starting application.");
-    info!("Setting up default logging.");
+fn configure_application() -> Result<ApplicationConfiguration> {
     let mut logger_configurator = LoggerConfigurator::default();
     let logging_handle = logger_configurator.setup_default_logger();
+    debug!("Default logging setup complete.");
 
-    info!("Parsing command line arguments.");
+    debug!("Parsing command line arguments.");
     let cli_application_configuration_data = ApplicationConfigurationData::parse();
-    info!("Successfully parsed command line arguments.");
+    debug!("Successfully parsed command line arguments.");
 
     info!("Loading application configuration.");
     let application_configuration_getter = ApplicationConfigurationGetter::new(cli_application_configuration_data);
@@ -42,22 +41,17 @@ async fn run() -> Result<()> {
             application_configuration.logging_config_path
         );
     }
+    Ok(application_configuration)
+}
 
+async fn run() -> Result<()> {
     let google_api_error_context = || "Failed to integrate with Google API using supplied service account key.";
-
-    info!("Setting up service account authenticator.");
+    let application_configuration = configure_application().with_context(|| "Failed to configure application.")?;
     let service_account_authenticator =
-        ServiceAccountAuthenticator::builder(application_configuration.service_account_key)
-            .build()
+        get_service_account_authenticator(application_configuration.service_account_key)
             .await
             .with_context(google_api_error_context)?;
-    info!("Successfully set up up service account authenticator.");
-
-    info!("Setting up google api hub.");
-    let hub = get_calendar_hub(service_account_authenticator)
-        .await
-        .with_context(google_api_error_context)?;
-    info!("Successfully set up google api hub.");
+    let hub = get_calendar_hub(service_account_authenticator).with_context(google_api_error_context)?;
 
     info!("Fetching google calendar events for today.");
     let events = get_calendar_events_for_today(hub, application_configuration.calendar_id.as_str())

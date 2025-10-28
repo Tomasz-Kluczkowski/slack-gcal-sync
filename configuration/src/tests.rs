@@ -1,12 +1,14 @@
 #[cfg(test)]
 mod test_application_configuration_getter {
+    use std::io::Write;
+
+    use google_calendar3::yup_oauth2::ServiceAccountKey;
+    use rstest::{fixture, rstest};
+    use tempfile::NamedTempFile;
+
     use crate::{
         ApplicationConfigurationData, ApplicationConfigurationGetter, ConfigurationError, SlackUserOauthToken,
     };
-    use google_calendar3::yup_oauth2::ServiceAccountKey;
-    use rstest::{fixture, rstest};
-    use std::io::Write;
-    use tempfile::NamedTempFile;
 
     #[fixture]
     fn file_app_config_data() -> ApplicationConfigurationData {
@@ -354,10 +356,12 @@ mod test_application_configuration_getter {
 
 #[cfg(test)]
 mod test_read_json_configuration {
-    use crate::{read_json_configuration, ConfigurationError};
-    use serde::{Deserialize, Serialize};
     use std::io::Write;
+
+    use serde::{Deserialize, Serialize};
     use tempfile::NamedTempFile;
+
+    use crate::{read_json_configuration, ConfigurationError};
 
     #[derive(Serialize, Deserialize, Debug, PartialEq)]
     struct TestPerson {

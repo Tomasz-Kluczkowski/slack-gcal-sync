@@ -1,7 +1,6 @@
 mod tests;
 
-use reqwest::Result as ReqwestResult;
-use reqwest::{Client, Response};
+use reqwest::{Client, Response, Result as ReqwestResult};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 

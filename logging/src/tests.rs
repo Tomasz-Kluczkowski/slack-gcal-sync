@@ -1,15 +1,20 @@
+// NOTE: These tests need to be run using cargo nextest run because they require complete separation.
 #[cfg(test)]
 mod test_logging {
 
-    use crate::DEFAULT_LOG_FILE_BASE_NAME;
-    use crate::DEFAULT_LOG_FILE_EXTENSION;
-    use crate::LoggerConfigurator;
-    use crate::{DEFAULT_LOG_FILE_PATH, DEFAULT_LOG_FILE_SIZE, LoggerError};
+    use std::{
+        fs::{File, create_dir_all, read_to_string, remove_dir_all},
+        io::{Seek, SeekFrom, Write},
+        path::Path,
+    };
+
     use log::{error, info, warn};
-    use std::fs::{File, create_dir_all, read_to_string, remove_dir_all};
-    use std::io::{Seek, SeekFrom, Write};
-    use std::path::Path;
     use tempfile::NamedTempFile;
+
+    use crate::{
+        DEFAULT_LOG_FILE_BASE_NAME, DEFAULT_LOG_FILE_EXTENSION, DEFAULT_LOG_FILE_PATH, DEFAULT_LOG_FILE_SIZE,
+        LoggerConfigurator, LoggerError,
+    };
 
     fn write_yaml_to_temp_file(yaml_string: &str) -> NamedTempFile {
         let mut file = NamedTempFile::with_suffix(".yaml".to_string()).unwrap();

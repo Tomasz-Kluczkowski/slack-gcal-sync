@@ -1,12 +1,11 @@
 mod tests;
 
+use std::{fs::File, path::Path};
+
 use clap::Parser;
 use google_calendar3::yup_oauth2::ServiceAccountKey;
 use log::info;
-use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
-use std::fs::File;
-use std::path::Path;
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
 
 const DEFAULT_SERVICE_ACCOUNT_PATH: &str = ".secrets/.service_account.json";

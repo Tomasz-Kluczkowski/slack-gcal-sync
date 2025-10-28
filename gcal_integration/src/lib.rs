@@ -1,25 +1,37 @@
 mod tests;
 
 use chrono::{Datelike, Duration, TimeZone, Utc};
-use google_calendar3::api::Event;
-use google_calendar3::hyper_rustls::HttpsConnector;
-use google_calendar3::hyper_util::client::legacy::connect::HttpConnector;
-use google_calendar3::yup_oauth2::authenticator::Authenticator;
-use google_calendar3::{hyper_rustls, hyper_util, CalendarHub, Error as GoogleAPIError};
+use google_calendar3::{
+    api::Event,
+    hyper_rustls,
+    hyper_rustls::HttpsConnector,
+    hyper_util,
+    hyper_util::client::legacy::connect::HttpConnector,
+    yup_oauth2::{authenticator::Authenticator, ServiceAccountAuthenticator, ServiceAccountKey},
+    CalendarHub, Error as GoogleAPIError,
+};
+use log::info;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum GoogleCalendarIntegrationError {
     #[error("Cannot communicate with Google Calendar API")]
-    GoogleCalendarCommunicationError(#[from] GoogleAPIError),
+    GoogleCalendarCommunicationError(#[from] Box<GoogleAPIError>),
 
     #[error("IO Error occurred")]
     IOError(#[from] std::io::Error),
 }
 
-pub async fn get_calendar_hub(
+impl From<GoogleAPIError> for GoogleCalendarIntegrationError {
+    fn from(err: GoogleAPIError) -> Self {
+        GoogleCalendarIntegrationError::GoogleCalendarCommunicationError(Box::new(err))
+    }
+}
+
+pub fn get_calendar_hub(
     authenticator: Authenticator<HttpsConnector<HttpConnector>>,
 ) -> Result<CalendarHub<HttpsConnector<HttpConnector>>, GoogleCalendarIntegrationError> {
+    info!("Setting up google api hub.");
     let client = hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new()).build(
         hyper_rustls::HttpsConnectorBuilder::new()
             .with_native_roots()?
@@ -27,7 +39,19 @@ pub async fn get_calendar_hub(
             .enable_http1()
             .build(),
     );
+    info!("Successfully set up google api hub.");
     Ok(CalendarHub::new(client, authenticator))
+}
+
+pub async fn get_service_account_authenticator(
+    service_account_key: ServiceAccountKey,
+) -> Result<Authenticator<HttpsConnector<HttpConnector>>, GoogleCalendarIntegrationError> {
+    info!("Setting up service account authenticator.");
+    let service_account_authenticator = ServiceAccountAuthenticator::builder(service_account_key)
+        .build()
+        .await?;
+    info!("Successfully set up up service account authenticator.");
+    Ok(service_account_authenticator)
 }
 
 pub async fn get_calendar_events_for_today(

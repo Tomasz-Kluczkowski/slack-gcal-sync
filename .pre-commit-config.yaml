@@ -4,7 +4,8 @@ repos:
       - id: cargo formatting
         name: cargo formatting
         description: Check if all files follow the rustfmt style
-        entry: cargo fmt --all
+        # Using nightly build to get access to import ordering functionality.
+        entry: cargo +nightly fmt --all
         language: system
         pass_filenames: false
   - repo: local

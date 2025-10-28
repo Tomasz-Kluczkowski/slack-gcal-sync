@@ -715,6 +715,7 @@ dependencies = [
  "chrono",
  "env_logger",
  "google-calendar3",
+ "log",
  "mockito",
  "rsa",
  "rustls",
