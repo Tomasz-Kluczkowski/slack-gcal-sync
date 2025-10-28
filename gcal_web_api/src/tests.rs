@@ -30,10 +30,10 @@ mod test_get_calendar_events_for_today {
     use google_calendar3::{
         hyper_rustls::HttpsConnector,
         hyper_util::client::legacy::connect::HttpConnector,
-        yup_oauth2::{authenticator::Authenticator, ServiceAccountAuthenticator, ServiceAccountKey},
+        yup_oauth2::{ServiceAccountAuthenticator, ServiceAccountKey, authenticator::Authenticator},
     };
     use mockito::{Mock, ServerGuard};
-    use rsa::{pkcs8::EncodePrivateKey, rand_core::OsRng, RsaPrivateKey};
+    use rsa::{RsaPrivateKey, pkcs8::EncodePrivateKey, rand_core::OsRng};
 
     use super::test_utils::{get_mock_auth_setup, setup_default_crypto_provider};
     use crate::{get_calendar_events_for_today, get_calendar_hub};
@@ -192,7 +192,7 @@ mod test_get_calendar_events_for_today {
 #[cfg(test)]
 mod test_get_service_account_authenticator {
     use google_calendar3::yup_oauth2::ServiceAccountKey;
-    use rsa::{pkcs8::EncodePrivateKey, rand_core::OsRng, RsaPrivateKey};
+    use rsa::{RsaPrivateKey, pkcs8::EncodePrivateKey, rand_core::OsRng};
 
     use super::test_utils::{get_mock_auth_setup, setup_default_crypto_provider};
     use crate::{get_calendar_hub, get_service_account_authenticator};

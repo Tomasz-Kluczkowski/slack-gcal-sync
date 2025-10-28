@@ -4,13 +4,13 @@ use anyhow::{Context, Result};
 use chrono::Utc;
 use clap::Parser;
 use configuration::{ApplicationConfiguration, ApplicationConfigurationData, ApplicationConfigurationGetter};
-use gcal_integration::{get_calendar_events_for_today, get_calendar_hub, get_service_account_authenticator};
+use gcal_web_api::{get_calendar_events_for_today, get_calendar_hub, get_service_account_authenticator};
 use log::{debug, info};
 use logging::LoggerConfigurator;
 use reqwest::Client;
-use slack_integration::{
-    ProfileData, ProfileRequestBody, SlackApiClient, SLACK_API_BASE_URL, SLACK_USER_PROFILE_GET_ENDPOINT,
-    SLACK_USER_PROFILE_SET_ENDPOINT,
+use slack_web_api::{
+    ProfileData, ProfileRequestBody, SLACK_API_BASE_URL, SLACK_USER_PROFILE_GET_ENDPOINT,
+    SLACK_USER_PROFILE_SET_ENDPOINT, SlackApiClient,
 };
 
 fn configure_application() -> Result<ApplicationConfiguration> {

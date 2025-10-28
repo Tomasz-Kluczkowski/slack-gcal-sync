@@ -1,20 +1,19 @@
 [workspace]
-members = ["configuration", "gcal_integration", "logging", "slack_integration"]
+members = ["configuration", "gcal_web_api", "logging", "slack_gcal_sync", "slack_web_api"]
 
 [package]
 name = "slack-gcal-sync"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 configuration = { path = "configuration"}
-gcal_integration = { path = "gcal_integration"}
-slack_integration = { path = "slack_integration"}
+gcal_web_api = { path = "gcal_web_api" }
+slack_web_api = { path = "slack_web_api" }
 logging = { path = "logging" }
-tokio = { version = "1.43.0", features = ["rt", "rt-multi-thread", "macros"] }
-clap = { version = "4.5.23", features = ["derive"] }
-google-calendar3 = "6.0.0"
-anyhow = "1.0.94"
-log = "0.4.22"
-reqwest = "0.12.12"
-chrono = "0.4.39"
+tokio = { version = "1.48.0", features = ["rt", "rt-multi-thread", "macros"] }
+clap = { version = "4.5.50", features = ["derive"] }
+anyhow = "1.0.100"
+log = "0.4.28"
+reqwest = "0.12.24"
+chrono = "0.4.42"
