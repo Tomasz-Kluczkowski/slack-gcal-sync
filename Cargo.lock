@@ -2243,6 +2243,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "slack_gcal_sync"
+version = "0.1.0"
+
+[[package]]
 name = "slack_integration"
 version = "0.1.0"
 dependencies = [
