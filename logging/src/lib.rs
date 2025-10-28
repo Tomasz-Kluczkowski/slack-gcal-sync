@@ -1,12 +1,24 @@
+mod tests;
+
+use std::{fs::remove_dir_all, path::Path};
+
 use log::LevelFilter;
-use log4rs::append::console::ConsoleAppender;
-use log4rs::append::rolling_file::policy::compound;
-use log4rs::append::rolling_file::policy::compound::roll::fixed_window::FixedWindowRoller;
-use log4rs::append::rolling_file::policy::compound::trigger::size::SizeTrigger;
-use log4rs::append::rolling_file::RollingFileAppender;
-use log4rs::config::{Appender, Root};
-use log4rs::encode::pattern::PatternEncoder;
-use log4rs::{Config, Handle};
+use log4rs::{
+    Config, Handle,
+    append::{
+        console::ConsoleAppender,
+        rolling_file::{
+            RollingFileAppender,
+            policy::{
+                compound,
+                compound::{roll::fixed_window::FixedWindowRoller, trigger::size::SizeTrigger},
+            },
+        },
+    },
+    config::{Appender, Root, load_config_file},
+    encode::pattern::PatternEncoder,
+};
+use thiserror::Error;
 
 pub const DEFAULT_LOG_LEVEL: LevelFilter = LevelFilter::Info;
 pub const DEFAULT_LOG_FILE_PATH: &str = "logs";
@@ -16,9 +28,14 @@ pub const DEFAULT_CONSOLE_LOG_PATTERN: &str = "{d(%+)(utc)} [{f}:{L}] {h({l})} {
 pub const DEFAULT_ROLLING_FILE_BASE_INDEX: u32 = 0;
 pub const DEFAULT_ROLLING_FILE_ARCHIVE_COUNT: u32 = 5;
 pub const DEFAULT_LOG_FILE_SIZE: u64 = 10 * 1024 * 1024; // 10 MB size limit
-                                                         // pub const DEFAULT_LOG_FILE_SIZE: u64 = 10 * 1024 * 1024; // 10 MB size limit
 pub const DEFAULT_CONSOLE_LOGGER_NAME: &str = "stdout";
 pub const DEFAULT_ROLLING_FILE_LOGGER_NAME: &str = "rollingfile";
+
+#[derive(Debug, Error)]
+pub enum LoggerError {
+    #[error("Cannot read logger configuration at path: {0}. {1}")]
+    ReadLoggerConfigurationError(String, String),
+}
 
 pub struct LoggerConfigurator {
     pub log_file_path: Option<String>,
@@ -45,7 +62,7 @@ impl LoggerConfigurator {
         format!("{DEFAULT_LOG_FILE_PATH}/{DEFAULT_LOG_FILE_BASE_NAME}.{DEFAULT_LOG_FILE_EXTENSION}")
     }
 
-    pub fn setup_logger(&self) -> Handle {
+    pub fn setup_default_logger(&self) -> Handle {
         let stdout = ConsoleAppender::builder()
             .encoder(Box::new(PatternEncoder::new(DEFAULT_CONSOLE_LOG_PATTERN)))
             .build();
@@ -74,5 +91,31 @@ impl LoggerConfigurator {
             .unwrap();
 
         log4rs::init_config(config).unwrap()
+    }
+
+    pub fn apply_logging_config_from_file(
+        &mut self,
+        logging_config_path: &str,
+        logging_handle: &Handle,
+    ) -> Result<(), LoggerError> {
+        match load_config_file(logging_config_path, Default::default()) {
+            Ok(config_from_file) => {
+                // When setting up logger from file, we no longer rely on values set buy default setup.
+                let log_file_path = self.log_file_path.clone().unwrap();
+                let log_file_folder = Path::new(&log_file_path).parent().unwrap();
+                if log_file_folder.exists() {
+                    remove_dir_all(log_file_folder).unwrap();
+                }
+                self.log_file_path = None;
+                self.log_file_roller_pattern = None;
+                self.log_file_size = None;
+                logging_handle.set_config(config_from_file);
+                Ok(())
+            }
+            Err(err) => Err(LoggerError::ReadLoggerConfigurationError(
+                logging_config_path.to_string(),
+                err.to_string(),
+            )),
+        }
     }
 }

@@ -10,8 +10,24 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  lint:
-    name: Linting checks
+  code_formatting_check:
+    name: Code formatting check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain:
+          - nightly
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
+          rustup component add rustfmt
+
+      - name: Check formatting of code
+        run: cargo +nightly fmt --all -- --check
+
+  code_quality_check:
+    name: Code quality check
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -20,9 +36,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
-
-      - name: Check formatting of code
-        run: cargo fmt --all -- --check
 
       - name: Check code suggestions with cargo clippy
         run: cargo clippy -- -D warnings
@@ -39,11 +52,14 @@ jobs:
       - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
       - run: rustup component add llvm-tools-preview
       - run: cargo install grcov
-      - run: |
+      - run: curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
+      - name: Run tests with coverage
+        run: |
           export RUSTFLAGS="-Cinstrument-coverage"
           export LLVM_PROFILE_FILE="cargo-tests-%p-%m.profraw"
-          cargo test --workspace
-      - run: |
+          cargo nextest run --workspace
+      - name: Generate coverage reports with Grcov
+        run: |
           grcov . --binary-path ./target/debug/deps/ \
           --source-dir . \
           --output-types cobertura \

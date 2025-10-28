@@ -21,7 +21,7 @@ appenders:
             roller:
                 kind: fixed_window
                 pattern: "logs/slack-gcal-sync-{}.log"
-                base: 1
+                base: 0
                 count: 5
 root:
     level: info

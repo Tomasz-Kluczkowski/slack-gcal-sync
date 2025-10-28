@@ -1,12 +1,13 @@
 #[cfg(test)]
 mod test_slack_api_client {
+    use mockito::{Mock, ServerGuard};
+    use reqwest::Client;
+    use serde_json::Value;
+
     use crate::{
         ProfileData, ProfileRequestBody, SlackApiClient, SlackApiError, INVALID_AUTH, SLACK_USER_PROFILE_GET_ENDPOINT,
         SLACK_USER_PROFILE_SET_ENDPOINT, UNKNOWN_METHOD,
     };
-    use mockito::{Mock, ServerGuard};
-    use reqwest::Client;
-    use serde_json::Value;
 
     async fn get_mock_user_profile_setup(
         mock_slack_api_response: &Value,
